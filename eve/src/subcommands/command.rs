@@ -15,7 +15,7 @@ const YOLO: &str = "yolo";
 
 pub(crate) fn get_subcommand() -> Command {
     Command::new(COMMAND)
-        .about("Get a command to complete a task defined in natural language.")
+        .about("Get a command to complete a task defined in natural language")
         .arg(
             arg!(--yolo "Run the suggested command without confirmation")
                 .short('y')
@@ -26,7 +26,12 @@ pub(crate) fn get_subcommand() -> Command {
 
 pub(crate) fn handle_command(matches: &ArgMatches, client: Client) -> Result<(), EveError> {
     let maybe_query = matches.get_one::<String>(QUERY);
-    let _yolo = matches.get_one::<bool>(YOLO);
+    let yolo = matches.get_one::<bool>(YOLO);
+    let is_yolo = match yolo {
+        Some(value) => value,
+        None => &false,
+    };
+
     match maybe_query {
         Some(query) => {
             let prompt = TEMPLATE_CONTENT.replace("QUERY", query);
@@ -39,8 +44,10 @@ pub(crate) fn handle_command(matches: &ArgMatches, client: Client) -> Result<(),
 
             println!("\nI think something like this would work:\n");
             print_boxed(&suggested_command);
-            println!("\nWould you like me to run it?");
-            if handle_yes_no_input() {
+            if !*is_yolo {
+                println!("\nWould you like me to run it?");
+            }
+            if *is_yolo || handle_yes_no_input() {
                 println!("Running command...");
                 run_command(&suggested_command)?;
             }

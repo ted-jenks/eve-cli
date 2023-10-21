@@ -16,6 +16,15 @@ use client::client::Client;
 use config::config::Config;
 use error::error::EveError;
 
+/*
+TODO:
+
+ - show the output of commands
+ - eve hello for a generated
+ - eve custom for a custom template
+ - eve error for an error explainer
+ */
+
 fn main() {
     #[allow(deprecated)]
     let mut config_file: PathBuf = home_dir().expect("Cannot identify home directory");
@@ -26,8 +35,8 @@ fn main() {
         .author("Ted")
         .about("Eve is your personal command-line AI assistant.")
         .subcommands([
-            subcommands::command::get_subcommand(),
             subcommands::config::get_subcommand(),
+            subcommands::command::get_subcommand(),
         ])
         .get_matches();
 
