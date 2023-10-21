@@ -25,8 +25,13 @@ fn main() {
         .version("1.0")
         .author("Ted")
         .about("Eve is your personal command-line AI assistant.")
-        .subcommands([subcommands::command::get_subcommand()])
+        .subcommands([
+            subcommands::command::get_subcommand(),
+            subcommands::config::get_subcommand(),
+        ])
         .get_matches();
+
+    handle_configuration_mode(&matches, &config_file);
 
     match get_config(config_file)
         .map(|config| get_client(config))
@@ -34,6 +39,18 @@ fn main() {
     {
         Err(e) => println!("{}", e),
         _ => return,
+    }
+}
+
+fn handle_configuration_mode(matches: &ArgMatches, config_file: &PathBuf) {
+    match matches.subcommand() {
+        Some((subcommands::config::COMMAND, _subcommand_matches)) => {
+            match subcommands::config::handle_command(config_file) {
+                Err(e) => println!("{}", e),
+                _ => return,
+            }
+        }
+        _ => (),
     }
 }
 
