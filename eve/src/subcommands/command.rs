@@ -1,11 +1,19 @@
 use clap::{arg, ArgMatches, Command};
 use std::str;
 
-pub const COMMAND: &str = "command";
+use crate::{
+    client::client::Client,
+    error::error::EveError,
+    utils::utils::{handle_yes_no_input, print_boxed, run_command},
+};
+
+const TEMPLATE_CONTENT: &str = include_str!("templates/command.txt");
+
+pub(crate) const COMMAND: &str = "command";
 const QUERY: &str = "query";
 const YOLO: &str = "yolo";
 
-pub fn get_subcommand() -> Command {
+pub(crate) fn get_subcommand() -> Command {
     Command::new(COMMAND)
         .about("Get a command to complete a task defined in natural language.")
         .arg(
@@ -16,7 +24,28 @@ pub fn get_subcommand() -> Command {
         .arg(arg!(<query> "The natural language description of the command").required(true))
 }
 
-pub fn handle_command(matches: &ArgMatches) {
-    let query = matches.get_one::<String>(QUERY);
-    let yolo = matches.get_one::<bool>(YOLO);
+pub(crate) fn handle_command(matches: &ArgMatches, client: Client) -> Result<(), EveError> {
+    let maybe_query = matches.get_one::<String>(QUERY);
+    let _yolo = matches.get_one::<bool>(YOLO);
+    match maybe_query {
+        Some(query) => {
+            let prompt = TEMPLATE_CONTENT.replace("QUERY", query);
+            let suggested_command = client.get_response(&prompt).map_err(|e| {
+                EveError::new(
+                    ("Unable to handle OpenAI request - ".to_string() + e.to_string().as_str())
+                        .as_str(),
+                )
+            })?;
+
+            println!("\nI think something like this would work:\n");
+            print_boxed(&suggested_command);
+            println!("\nWould you like me to run it?");
+            if handle_yes_no_input() {
+                println!("Running command...");
+                run_command(&suggested_command)?;
+            }
+        }
+        _ => println!("No command query provided."),
+    }
+    Ok(())
 }

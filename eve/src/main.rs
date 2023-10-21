@@ -4,21 +4,22 @@ mod client;
 mod config;
 mod error;
 mod subcommands;
+mod utils;
 
+#[allow(deprecated)]
+use std::env::home_dir;
+use std::path::PathBuf;
+
+use clap::ArgMatches;
 use clap::Command;
+use client::client::Client;
 use config::config::Config;
+use error::error::EveError;
 
 fn main() {
-    match Config::from_file(".evecfg") {
-        Ok(config) => match (config.model(), config.api_key()) {
-            (Some(model), Some(api_key)) => {
-                println!("Model: {}", model.to_string());
-                println!("API Key: {}", api_key);
-            }
-            _ => println!("Invalid or incomplete configuration file."),
-        },
-        Err(e) => println!("{}", e),
-    }
+    #[allow(deprecated)]
+    let mut config_file: PathBuf = home_dir().expect("Cannot identify home directory");
+    config_file.push(".evecfg");
 
     let matches = Command::new("eve")
         .version("1.0")
@@ -27,10 +28,28 @@ fn main() {
         .subcommands([subcommands::command::get_subcommand()])
         .get_matches();
 
+    match get_config(config_file)
+        .map(|config| get_client(config))
+        .and_then(|client| handle_subcommand(matches, client))
+    {
+        Err(e) => println!("{}", e),
+        _ => return,
+    }
+}
+
+fn get_config(config_file: PathBuf) -> Result<Config, error::error::EveError> {
+    Config::from_file(config_file)
+}
+
+fn get_client(config: Config) -> Client {
+    Client::new(config.api_key(), config.model())
+}
+
+fn handle_subcommand(matches: ArgMatches, client: Client) -> Result<(), EveError> {
     match matches.subcommand() {
         Some((subcommands::command::COMMAND, subcommand_matches)) => {
-            subcommands::command::handle_command(subcommand_matches);
+            subcommands::command::handle_command(subcommand_matches, client)
         }
-        _ => println!("No valid subcommand provided."),
+        _ => Err(EveError::new("No valid subcommand provided.")),
     }
 }

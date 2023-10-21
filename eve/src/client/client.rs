@@ -1,28 +1,32 @@
-use crate::client::model::Model;
-use curl::easy::Easy;
+use std::error::Error;
 
-struct Client {
+use crate::{client::model::Model, error::error::EveError};
+use curl::easy::Easy;
+use serde_json::Value;
+
+pub(crate) struct Client {
     api_key: String,
     model: Model,
 }
 
 impl Client {
-    fn new(api_key: &str, model: Model) -> Client {
+    pub(crate) fn new(api_key: &str, model: Model) -> Client {
         Client {
             api_key: api_key.to_string(),
             model,
         }
     }
 
-    pub fn get_response(&self, prompt: &str) -> Result<String, curl::Error> {
+    pub(crate) fn get_response(&self, prompt: &str) -> Result<String, Box<dyn Error>> {
         let mut easy = Easy::new();
-        let url = "https://api.openai.com/v1/chat/completions";
+        let url = "https://api.openai.com/v1/completions";
         let payload = self.get_payload(prompt);
 
         easy.url(url)?;
         easy.post(true)?;
         easy.post_field_size(payload.len() as u64)?;
         easy.http_headers(self.get_headers())?;
+        easy.post_fields_copy(payload.as_bytes())?;
 
         let mut response_data = Vec::new();
         {
@@ -34,8 +38,9 @@ impl Client {
             transfer.perform()?;
         }
 
-        let response_string = String::from_utf8(response_data).unwrap();
-        Ok(response_string)
+        let response_string: String = String::from_utf8(response_data).unwrap();
+        let response_value = Client::retrieve_text_from_json(response_string.as_str())?;
+        Ok(response_value)
     }
 
     fn get_headers(&self) -> curl::easy::List {
@@ -48,6 +53,30 @@ impl Client {
     }
 
     fn get_payload(&self, prompt: &str) -> String {
-        format!("{{\"model\": \"{}\", \"object\": \"chat.completion\", \"prompt\": \"{}\", \"max_tokens\": 500, \"stop\": \"***\"}}", self.model.to_string() , prompt)
+        serde_json::json!({
+            "model": self.model.to_string(),
+            "prompt": prompt,
+            "max_tokens": 10,
+            "temperature": 0,
+            "stop": "***"
+        })
+        .to_string()
+    }
+
+    fn retrieve_text_from_json(json_string: &str) -> Result<String, EveError> {
+        let parsed: Value = serde_json::from_str(json_string)
+            .map_err(|e| EveError::new(format!("{}", e).as_str()))?;
+        let choices = parsed
+            .get("choices")
+            .ok_or(EveError::new("Field 'choices' not found"))?
+            .as_array()
+            .ok_or(EveError::new("Field 'choices' is not an array"))?;
+        let choice_text = choices[0]
+            .get("text")
+            .ok_or(EveError::new("Field 'text' not found in choices"))?
+            .as_str()
+            .ok_or(EveError::new("Field 'text' is not a valid string"))?
+            .to_string();
+        Ok(choice_text)
     }
 }
