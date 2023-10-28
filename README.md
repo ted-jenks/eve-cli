@@ -2,6 +2,8 @@
 
 `eve-cli` is a command line tool written in Rust. She is your development assistant for debugging errors and working out commands.
 
+![eve-demo](https://github.com/ted-jenks/eve-cli/assets/77486246/6878cdfd-5997-46f6-bfb1-ffda3693fb09)
+
 To use `eve` you will need a valid OpenAI API key. This can be generated [here](https://platform.openai.com/account/api-keys).
 
 ## Usage
