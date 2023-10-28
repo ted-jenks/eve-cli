@@ -6,6 +6,7 @@ use std::path::PathBuf;
 const MODEL: &str = "MODEL";
 const API_KEY: &str = "API_KEY";
 
+#[derive(Debug)]
 pub(crate) struct Config {
     model: Model,
     api_key: String,
@@ -56,5 +57,76 @@ impl Config {
 
     pub(crate) fn api_key(&self) -> &str {
         self.api_key.as_ref()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_config_from_file_valid() {
+        let model_str = "gpt-3.5-turbo-instruct";
+        let api_key = "test_api_key";
+
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "MODEL={}", model_str).unwrap();
+        writeln!(file, "API_KEY={}", api_key).unwrap();
+
+        let result = Config::from_file(file.path().to_path_buf());
+        assert!(result.is_ok());
+
+        let config = result.unwrap();
+        assert_eq!(config.model(), Model::Gpt35Turbo);
+        assert_eq!(config.api_key(), api_key);
+    }
+
+    #[test]
+    fn test_config_from_file_invalid_model() {
+        let model_str = "invalid_model";
+        let api_key = "test_api_key";
+
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "MODEL={}", model_str).unwrap();
+        writeln!(file, "API_KEY={}", api_key).unwrap();
+
+        let result = Config::from_file(file.path().to_path_buf());
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            format!("\u{1b}[31mError\u{1b}[0m: Invalid model in config: {}", format!("\u{1b}[31mError\u{1b}[0m: Invalid model varient configured. Fix ~.evecfg or run `eve config`. Valid varients: {}", Model::valid_models()))
+        );
+    }
+
+    #[test]
+    fn test_config_from_file_missing_model() {
+        let api_key = "test_api_key";
+
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "API_KEY={}", api_key).unwrap();
+
+        let result = Config::from_file(file.path().to_path_buf());
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "\u{1b}[31mError\u{1b}[0m: Model not found in the config"
+        );
+    }
+
+    #[test]
+    fn test_config_from_file_missing_api_key() {
+        let model_str = "gpt-3.5-turbo-instruct";
+
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "MODEL={}", model_str).unwrap();
+
+        let result = Config::from_file(file.path().to_path_buf());
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "\u{1b}[31mError\u{1b}[0m: API key not found in the config"
+        );
     }
 }

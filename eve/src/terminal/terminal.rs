@@ -111,3 +111,21 @@ pub(crate) fn run_command(command: &str) -> Result<(), EveError> {
         .map_err(|_e| EveError::new("Failed to run the command."))?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_msg() {
+        let message = "errors warnings pass safely";
+        let expected_result = "\u{1b}[31merrors \u{1b}[0m\u{1b}[33mwarnings \u{1b}[0m\u{1b}[32mpass \u{1b}[0m\u{1b}[32msafely\u{1b}[0m";
+        assert_eq!(format_msg(message), expected_result);
+    }
+
+    #[test]
+    fn test_run_command() {
+        let result = run_command("ls");
+        assert!(result.is_ok());
+    }
+}
