@@ -56,7 +56,9 @@ pub(crate) fn run_command(command: &str) -> Result<(), EveError> {
     Command::new("sh")
         .arg("-c")
         .arg(command)
-        .output()
+        .spawn()
+        .map_err(|_e| EveError::new("Failed to run the command."))?
+        .wait()
         .map_err(|_e| EveError::new("Failed to run the command."))?;
     Ok(())
 }

@@ -4,7 +4,7 @@ mod client;
 mod config;
 mod error;
 mod subcommands;
-mod utils;
+mod terminal;
 
 #[allow(deprecated)]
 use std::env::home_dir;
@@ -18,8 +18,6 @@ use error::error::EveError;
 
 /*
 TODO:
-
- - show the output of commands
  - eve hello for a generated
  - eve custom for a custom template
  - eve error for an error explainer
@@ -35,6 +33,7 @@ fn main() {
         .author("Ted")
         .about("Eve is your personal command-line AI assistant.")
         .subcommands([
+            subcommands::hello::get_subcommand(),
             subcommands::config::get_subcommand(),
             subcommands::command::get_subcommand(),
         ])
@@ -73,6 +72,7 @@ fn get_client(config: Config) -> Client {
 
 fn handle_subcommand(matches: ArgMatches, client: Client) -> Result<(), EveError> {
     match matches.subcommand() {
+        Some((subcommands::hello::COMMAND, _)) => subcommands::hello::handle_command(client),
         Some((subcommands::command::COMMAND, subcommand_matches)) => {
             subcommands::command::handle_command(subcommand_matches, client)
         }

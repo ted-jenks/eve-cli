@@ -17,10 +17,14 @@ impl Client {
         }
     }
 
-    pub(crate) fn get_response(&self, prompt: &str) -> Result<String, Box<dyn Error>> {
+    pub(crate) fn get_response(
+        &self,
+        prompt: &str,
+        temperature: f32,
+    ) -> Result<String, Box<dyn Error>> {
         let mut easy = Easy::new();
         let url = "https://api.openai.com/v1/completions";
-        let payload = self.get_payload(prompt);
+        let payload = self.get_payload(prompt, temperature);
 
         easy.url(url)?;
         easy.post(true)?;
@@ -52,12 +56,12 @@ impl Client {
         headers
     }
 
-    fn get_payload(&self, prompt: &str) -> String {
+    fn get_payload(&self, prompt: &str, temperature: f32) -> String {
         serde_json::json!({
             "model": self.model.to_string(),
             "prompt": prompt,
-            "max_tokens": 10,
-            "temperature": 0,
+            "max_tokens": 100,
+            "temperature": temperature,
             "stop": "***"
         })
         .to_string()

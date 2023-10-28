@@ -4,7 +4,7 @@ use std::str;
 use crate::{
     client::client::Client,
     error::error::EveError,
-    utils::utils::{handle_yes_no_input, print_boxed, run_command},
+    terminal::terminal::{handle_yes_no_input, print_boxed, run_command},
 };
 
 const TEMPLATE_CONTENT: &str = include_str!("templates/command.txt");
@@ -35,7 +35,7 @@ pub(crate) fn handle_command(matches: &ArgMatches, client: Client) -> Result<(),
     match maybe_query {
         Some(query) => {
             let prompt = TEMPLATE_CONTENT.replace("QUERY", query);
-            let suggested_command = client.get_response(&prompt).map_err(|e| {
+            let suggested_command = client.get_response(&prompt, 0.0).map_err(|e| {
                 EveError::new(
                     ("Unable to handle OpenAI request - ".to_string() + e.to_string().as_str())
                         .as_str(),
