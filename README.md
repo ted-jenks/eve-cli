@@ -1,6 +1,6 @@
 # `eve` - Your AI Terminal Assistant
 
-`eve-cli` is a command line tool written in Rust. She is you development assistant for debugging errors and working out commands.
+`eve-cli` is a command line tool written in Rust. She is your development assistant for debugging errors and working out commands.
 
 To use `eve` you will need a valid OpenAI API key. This can be generated [here](https://platform.openai.com/account/api-keys).
 
