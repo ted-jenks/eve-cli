@@ -60,7 +60,7 @@ impl Client {
         serde_json::json!({
             "model": self.model.to_string(),
             "prompt": prompt,
-            "max_tokens": 100,
+            "max_tokens": 400,
             "temperature": temperature,
             "stop": "***"
         })

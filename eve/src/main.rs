@@ -15,15 +15,16 @@ use clap::Command;
 use client::client::Client;
 use config::config::Config;
 use error::error::EveError;
+use terminal::terminal::read_stdin;
 
 /*
 TODO:
- - eve hello for a generated
  - eve custom for a custom template
- - eve error for an error explainer
  */
 
 fn main() {
+    let stdin = read_stdin();
+
     #[allow(deprecated)]
     let mut config_file: PathBuf = home_dir().expect("Cannot identify home directory");
     config_file.push(".evecfg");
@@ -36,6 +37,7 @@ fn main() {
             subcommands::hello::get_subcommand(),
             subcommands::config::get_subcommand(),
             subcommands::command::get_subcommand(),
+            subcommands::error::get_subcommand(),
         ])
         .get_matches();
 
@@ -43,7 +45,7 @@ fn main() {
 
     match get_config(config_file)
         .map(|config| get_client(config))
-        .and_then(|client| handle_subcommand(matches, client))
+        .and_then(|client| handle_subcommand(matches, client, stdin))
     {
         Err(e) => println!("{}", e),
         _ => return,
@@ -70,12 +72,13 @@ fn get_client(config: Config) -> Client {
     Client::new(config.api_key(), config.model())
 }
 
-fn handle_subcommand(matches: ArgMatches, client: Client) -> Result<(), EveError> {
+fn handle_subcommand(matches: ArgMatches, client: Client, stdin: String) -> Result<(), EveError> {
     match matches.subcommand() {
         Some((subcommands::hello::COMMAND, _)) => subcommands::hello::handle_command(client),
         Some((subcommands::command::COMMAND, subcommand_matches)) => {
             subcommands::command::handle_command(subcommand_matches, client)
         }
+        Some((subcommands::error::COMMAND, _)) => subcommands::error::handle_command(stdin, client),
         _ => Err(EveError::new("No valid subcommand provided.")),
     }
 }
