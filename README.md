@@ -8,6 +8,7 @@ Becuase why not write a performant cli and bottle neck it with OpenAI 😅?
 
 To use `eve` you will need a valid OpenAI API key. This can be generated [here](https://platform.openai.com/account/api-keys).
 
+
 ## Usage
 
 ### `hello`
